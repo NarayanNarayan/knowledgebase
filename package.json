@@ -5,8 +5,8 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
+    "start": "node --inspect server.js",
+    "dev": "nodemon --inspect server.js",
     "mcp:start": "node mcp-server.js",
     "mcp:dev": "nodemon mcp-server.js",
     "docker:up": "docker-compose up -d",

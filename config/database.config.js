@@ -9,7 +9,7 @@ export const databaseConfig = {
     password: process.env.NEO4J_PASSWORD || '',
   },
   postgres: {
-    connectionString: process.env.POSTGRES_URI || 'postgresql://user:password@localhost:5432/knowledgebase',
+    connectionString: process.env.POSTGRES_URI || 'postgresql://postgres:password@localhost:5432/knowledgebase',
     // PostgreSQL table schemas
     tables: {
       userProfiles: 'user_profiles',

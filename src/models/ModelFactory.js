@@ -45,13 +45,21 @@ export class ModelFactory {
     const model = embeddingModel || this.config.defaultEmbeddingModel;
     
     if (this.config.providers.google.embeddings[model]) {
+      const apiKey = this.config.providers.google.apiKey;
+      if (!apiKey) {
+        throw new Error('GOOGLE_API_KEY is not set. Please set it as an environment variable: GOOGLE_API_KEY=your_api_key');
+      }
       return new GoogleGenerativeAIEmbeddings({
-        apiKey: this.config.providers.google.apiKey,
+        apiKey: apiKey,
         modelName: model,
       });
     } else if (this.config.providers.openai.embeddings[model]) {
+      const apiKey = this.config.providers.openai.apiKey;
+      if (!apiKey) {
+        throw new Error('OPENAI_API_KEY is not set. Please set it as an environment variable: OPENAI_API_KEY=your_api_key');
+      }
       return new OpenAIEmbeddings({
-        apiKey: this.config.providers.openai.apiKey,
+        apiKey: apiKey,
         modelName: this.config.providers.openai.embeddings[model].name,
       });
     }
@@ -69,9 +77,14 @@ export class ModelFactory {
       throw new Error(`Unknown Google model: ${modelIdentifier}`);
     }
 
+    const apiKey = this.config.providers.google.apiKey;
+    if (!apiKey) {
+      throw new Error('GOOGLE_API_KEY is not set. Please set it as an environment variable: GOOGLE_API_KEY=your_api_key');
+    }
+
     return new ChatGoogleGenerativeAI({
-      apiKey: this.config.providers.google.apiKey,
-      modelName: modelConfig.name,
+      apiKey: apiKey,
+      model: modelConfig.name,
       temperature: options.temperature ?? modelConfig.temperature,
       maxOutputTokens: options.maxTokens ?? modelConfig.maxTokens,
       ...options,
@@ -88,8 +101,13 @@ export class ModelFactory {
       throw new Error(`Unknown OpenAI model: ${modelIdentifier}`);
     }
 
+    const apiKey = this.config.providers.openai.apiKey;
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY is not set. Please set it as an environment variable: OPENAI_API_KEY=your_api_key');
+    }
+
     return new ChatOpenAI({
-      apiKey: this.config.providers.openai.apiKey,
+      apiKey: apiKey,
       modelName: modelConfig.name,
       temperature: options.temperature ?? modelConfig.temperature,
       maxTokens: options.maxTokens ?? modelConfig.maxTokens,
@@ -107,8 +125,13 @@ export class ModelFactory {
       throw new Error(`Unknown Anthropic model: ${modelIdentifier}`);
     }
 
+    const apiKey = this.config.providers.anthropic.apiKey;
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY is not set. Please set it as an environment variable: ANTHROPIC_API_KEY=your_api_key');
+    }
+
     return new ChatAnthropic({
-      apiKey: this.config.providers.anthropic.apiKey,
+      apiKey: apiKey,
       modelName: modelConfig.name,
       temperature: options.temperature ?? modelConfig.temperature,
       maxTokens: options.maxTokens ?? modelConfig.maxTokens,

@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const modelsConfig = {
-  defaultProvider: process.env.DEFAULT_MODEL || 'gemini-pro',
+  defaultProvider: process.env.DEFAULT_MODEL || 'gemini-2.5-flash',
   defaultEmbeddingModel: process.env.DEFAULT_EMBEDDING_MODEL || 'text-embedding-004',
   
   providers: {
@@ -11,19 +11,34 @@ export const modelsConfig = {
       apiKey: process.env.GOOGLE_API_KEY,
       models: {
         'gemini-pro': {
-          name: 'gemini-pro',
+          name: 'models/gemini-flash-latest', // Using latest stable flash model
+          temperature: 0.7,
+          maxTokens: 8192,
+        },
+        'gemini-1.0-pro': {
+          name: 'models/gemini-pro-latest',
           temperature: 0.7,
           maxTokens: 8192,
         },
         'gemini-1.5-pro': {
-          name: 'gemini-1.5-pro',
+          name: 'models/gemini-2.5-pro', // Using stable 2.5 Pro
           temperature: 0.7,
           maxTokens: 32768,
         },
         'gemini-1.5-flash': {
-          name: 'gemini-1.5-flash',
+          name: 'models/gemini-2.5-flash', // Using stable 2.5 Flash
           temperature: 0.7,
           maxTokens: 8192,
+        },
+        'gemini-2.5-flash': {
+          name: 'models/gemini-2.5-flash',
+          temperature: 0.7,
+          maxTokens: 8192,
+        },
+        'gemini-2.5-pro': {
+          name: 'models/gemini-2.5-pro',
+          temperature: 0.7,
+          maxTokens: 32768,
         },
       },
       embeddings: {

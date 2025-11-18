@@ -32,12 +32,12 @@ Evaluate:
 3. Missing information: What specific information is missing (if any)?
 
 Respond with JSON:
-{
+{{
   "confidence": 0.0-1.0,
   "needsRefinement": boolean,
   "missingInformation": "description of what's missing" or null,
   "reasoning": "brief explanation"
-}`;
+}}`;
 
   static RETRIEVAL_EVALUATION_USER = `Original Query: {query}
 
@@ -94,12 +94,12 @@ Available agents:
 - DIRECT_RESPONSE: For simple questions that don't need specialized processing
 
 Analyze the user's request and respond with a JSON object:
-{
+{{
   "agents": ["AGENT_NAME"],
   "reasoning": "why these agents",
   "needsModel": boolean,
   "dataProcessing": "programmatic" | "model" | "both" | "none"
-}`;
+}}`;
 
   static ROUTER_USER_PROMPT = `Request: {prompt}
 
