@@ -164,9 +164,13 @@ app.post('/api/ingest', async (req, res) => {
 
     const result = await ingestionService.ingestDocument(content, metadata);
     
+    // Transform docId to doc_id for API consistency
+    const { docId, ...rest } = result;
+    
     res.json({
       success: true,
-      ...result,
+      doc_id: docId,
+      ...rest,
     });
   } catch (error) {
     res.status(500).json({ 
