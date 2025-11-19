@@ -68,7 +68,7 @@ app.post('/api/chat/create', async (req, res) => {
   try {
     const { chatType, userId, metadata } = req.body;
     const chat = await chatService.createChat(chatType, userId, metadata);
-    res.json({ success: true, chat });
+    res.json({ success: true, data: { chat } });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
@@ -81,7 +81,7 @@ app.get('/api/chat/:chatId', async (req, res) => {
     if (!chat) {
       return res.status(404).json({ success: false, error: 'Chat not found' });
     }
-    res.json({ success: true, chat });
+    res.json({ success: true, data: { chat } });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
@@ -92,7 +92,7 @@ app.get('/api/chat/:chatId/history', async (req, res) => {
   try {
     const { limit = 50, offset = 0 } = req.query;
     const history = await chatService.getHistory(req.params.chatId, parseInt(limit), parseInt(offset));
-    res.json({ success: true, history });
+    res.json({ success: true, data: { history } });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
@@ -169,8 +169,10 @@ app.post('/api/ingest', async (req, res) => {
     
     res.json({
       success: true,
-      doc_id: docId,
-      ...rest,
+      data: {
+        doc_id: docId,
+        ...rest,
+      },
     });
   } catch (error) {
     res.status(500).json({ 
@@ -198,7 +200,161 @@ app.get('/api/knowledge/:id', async (req, res) => {
     
     res.json({
       success: true,
-      entity: result,
+      data: { entity: result },
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// Create or update knowledge graph entity
+app.post('/api/knowledge/entity', async (req, res) => {
+  try {
+    const { id, type, properties = {} } = req.body;
+    
+    if (!id || !type) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'id and type are required' 
+      });
+    }
+
+    const entity = await storage.neo4j.upsertEntity(id, type, properties);
+    
+    res.json({
+      success: true,
+      data: { entity },
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// Create relationship between entities
+app.post('/api/knowledge/relationship', async (req, res) => {
+  try {
+    const { fromId, toId, relationshipType, properties = {} } = req.body;
+    
+    if (!fromId || !toId || !relationshipType) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'fromId, toId, and relationshipType are required' 
+      });
+    }
+
+    // Validate relationship type (must be alphanumeric with underscores, max 50 chars)
+    // This prevents Cypher injection attacks
+    if (!/^[A-Za-z0-9_]{1,50}$/.test(relationshipType)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'relationshipType must be alphanumeric with underscores only (1-50 characters)' 
+      });
+    }
+
+    // Validate that both entities exist
+    const fromEntity = await storage.neo4j.getEntity(fromId);
+    const toEntity = await storage.neo4j.getEntity(toId);
+    
+    if (!fromEntity) {
+      return res.status(404).json({ 
+        success: false, 
+        error: `Source entity with id '${fromId}' not found` 
+      });
+    }
+    
+    if (!toEntity) {
+      return res.status(404).json({ 
+        success: false, 
+        error: `Target entity with id '${toId}' not found` 
+      });
+    }
+
+    const relationship = await storage.neo4j.createRelationship(
+      fromId, 
+      toId, 
+      relationshipType, 
+      properties
+    );
+    
+    res.json({
+      success: true,
+      data: { relationship },
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// Delete knowledge graph entity
+app.delete('/api/knowledge/entity/:id', async (req, res) => {
+  try {
+    const deleted = await storage.neo4j.deleteEntity(req.params.id);
+    
+    if (!deleted) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Entity not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: { deleted: true },
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// Delete relationship between entities
+app.delete('/api/knowledge/relationship', async (req, res) => {
+  try {
+    const { fromId, toId, relationshipType } = req.body;
+    
+    if (!fromId || !toId || !relationshipType) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'fromId, toId, and relationshipType are required' 
+      });
+    }
+
+    // Validate relationship type (must be alphanumeric with underscores, max 50 chars)
+    // This prevents Cypher injection attacks
+    if (!/^[A-Za-z0-9_]{1,50}$/.test(relationshipType)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'relationshipType must be alphanumeric with underscores only (1-50 characters)' 
+      });
+    }
+
+    const deleted = await storage.neo4j.deleteRelationship(
+      fromId, 
+      toId, 
+      relationshipType
+    );
+    
+    if (!deleted) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Relationship not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: { deleted: true },
     });
   } catch (error) {
     res.status(500).json({ 
@@ -221,7 +377,7 @@ app.post('/api/profile', async (req, res) => {
     }
 
     const profile = await userProfileService.upsertProfile(userId, profileData);
-    res.json({ success: true, profile });
+    res.json({ success: true, data: { profile } });
   } catch (error) {
     res.status(500).json({ 
       success: false, 
@@ -241,7 +397,7 @@ app.get('/api/profile/:userId', async (req, res) => {
       });
     }
     
-    res.json({ success: true, profile });
+    res.json({ success: true, data: { profile } });
   } catch (error) {
     res.status(500).json({ 
       success: false, 
@@ -254,7 +410,7 @@ app.get('/api/profile/:userId', async (req, res) => {
 app.get('/api/stats/graph', async (req, res) => {
   try {
     const stats = await storage.neo4j.getStats();
-    res.json({ success: true, stats });
+    res.json({ success: true, data: { stats } });
   } catch (error) {
     res.status(500).json({ 
       success: false, 

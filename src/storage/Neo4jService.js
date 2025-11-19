@@ -268,18 +268,61 @@ export class Neo4jService {
   async getStats() {
     const session = this.driver.session();
     try {
-      const result = await session.run(`
+      // Get node count
+      const nodeCountResult = await session.run(`
         MATCH (e:Entity)
-        WITH count(e) as entityCount, count(distinct e.type) as typeCount
-        MATCH ()-[r]->()
-        RETURN entityCount, typeCount, count(r) as relationshipCount
+        RETURN count(e) as nodeCount
       `);
       
-      const record = result.records[0];
+      // Get node types with counts
+      const nodeTypesResult = await session.run(`
+        MATCH (e:Entity)
+        WHERE e.type IS NOT NULL
+        RETURN e.type as type, count(*) as count
+        ORDER BY count DESC
+      `);
+      
+      // Get relationship count
+      const relCountResult = await session.run(`
+        MATCH ()-[r]->()
+        RETURN count(r) as relationshipCount
+      `);
+      
+      // Get relationship types with counts
+      const relTypesResult = await session.run(`
+        MATCH ()-[r]->()
+        RETURN type(r) as type, count(*) as count
+        ORDER BY count DESC
+      `);
+      
+      const nodeCount = nodeCountResult.records[0]?.get('nodeCount').toNumber() || 0;
+      const relationshipCount = relCountResult.records[0]?.get('relationshipCount').toNumber() || 0;
+      
+      // Convert node types to object
+      const nodeTypes = {};
+      nodeTypesResult.records.forEach(record => {
+        const type = record.get('type');
+        const count = record.get('count').toNumber();
+        if (type) {
+          nodeTypes[type] = count;
+        }
+      });
+      
+      // Convert relationship types to object
+      const relationshipTypes = {};
+      relTypesResult.records.forEach(record => {
+        const type = record.get('type');
+        const count = record.get('count').toNumber();
+        if (type) {
+          relationshipTypes[type] = count;
+        }
+      });
+      
       return {
-        entities: record?.get('entityCount').toNumber() || 0,
-        types: record?.get('typeCount').toNumber() || 0,
-        relationships: record?.get('relationshipCount').toNumber() || 0,
+        nodeCount,
+        relationshipCount,
+        nodeTypes,
+        relationshipTypes,
       };
     } finally {
       await session.close();

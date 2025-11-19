@@ -72,7 +72,7 @@ export class AgentOrchestrator {
     // Build context using ContextBuilder
     const context = await this.contextBuilder.buildContext(options);
 
-    const agentsUsed = [];
+    let agentsUsed = [];
     const toolsUsed = [];
     let finalResponse = '';
     let agentResults = []; // Declare in outer scope
@@ -143,19 +143,25 @@ export class AgentOrchestrator {
       systemMessage += profileService.formatProfileForSystemMessage(context.userProfile);
     }
 
+    // Escape curly braces in messages to prevent LangChain from treating them as template variables
+    const escapeBraces = (text) => {
+      if (typeof text !== 'string') return text;
+      return text.replace(/\{/g, '{{').replace(/\}/g, '}}');
+    };
+
     const messages = [
-      ['system', systemMessage],
+      ['system', escapeBraces(systemMessage)],
     ];
 
     // Add chat history
     if (context.chatHistory && context.chatHistory.length > 0) {
       context.chatHistory.forEach(msg => {
-        messages.push([msg.role, msg.content]);
+        messages.push([msg.role, escapeBraces(msg.content)]);
       });
     }
 
     // Add current prompt
-    messages.push(['user', prompt]);
+    messages.push(['user', escapeBraces(prompt)]);
 
     const chatPrompt = ChatPromptTemplate.fromMessages(messages);
     const chain = chatPrompt.pipe(model);

@@ -193,6 +193,26 @@ npm run mcp:start
 npm run mcp:dev
 ```
 
+### Start the Frontend
+
+First, install frontend dependencies (if not already done):
+
+```bash
+npm run frontend:install
+```
+
+Then start the frontend development server:
+
+```bash
+npm run frontend:dev
+```
+
+The frontend will be available at `http://localhost:5173`
+
+Other frontend commands:
+- `npm run frontend:build` - Build the frontend for production
+- `npm run frontend:preview` - Preview the production build
+
 ### API Examples
 
 #### 1. Create a Chat Session
